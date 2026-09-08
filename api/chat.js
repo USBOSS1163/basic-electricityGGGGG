@@ -31,7 +31,6 @@ export default async function handler(req, res) {
     }
 
     if (req.method === "POST") {
-      // 確保 body 能夠被正確解析
       let bodyData = req.body;
       if (typeof bodyData === "string") {
         try { bodyData = JSON.parse(bodyData); } catch (e) {}
@@ -41,7 +40,6 @@ export default async function handler(req, res) {
       let currentContent = { messages: [] };
       let latestSha = "";
 
-      // 抓取 GitHub 最新 SHA
       try {
         const { data } = await octokit.repos.getContent({
           owner: OWNER,
@@ -58,11 +56,9 @@ export default async function handler(req, res) {
       let actionType = "UNKNOWN";
 
       if (overrideMessages && Array.isArray(overrideMessages)) {
-        // 刪除邏輯：直接用過濾後的陣列取代原本陣列
         currentContent.messages = overrideMessages;
         actionType = "DELETE_OVERRIDE";
       } else if (newMsg) {
-        // 新增邏輯
         if (!Array.isArray(currentContent.messages)) currentContent.messages = [];
         currentContent.messages.push(newMsg);
         if (currentContent.messages.length > 50) {
@@ -70,16 +66,19 @@ export default async function handler(req, res) {
         }
         actionType = "ADD_NEW";
       } else {
-        return res.status(400).json({ success: false, error: "無效的請求內容 (body 缺少 newMsg 或 overrideMessages)" });
+        return res.status(400).json({ success: false, error: "無效的請求內容" });
       }
 
-      // 寫入 GitHub
+      // 修正重點：把 JSON 字串明確轉為 UTF-8 Buffer 後再轉為 Base64
+      const jsonString = JSON.stringify(currentContent, null, 2);
+      const base64Content = Buffer.from(jsonString, "utf-8").toString("base64");
+
       const updateResult = await octokit.repos.createOrUpdateFileContents({
         owner: OWNER,
         repo: REPO,
         path: FILE_PATH,
         message: `[API Action] ${actionType} at ${new Date().toISOString()}`,
-        content: Buffer.from(JSON.stringify(currentContent, null, 2)).toString("utf-8"),
+        content: base64Content,
         sha: latestSha || undefined
       });
 
