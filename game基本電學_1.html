@@ -1,0 +1,120 @@
+<body bgcolor="lightpink">
+
+    <!-- 左上角切換選單（把遊戲一按鈕加進來） -->
+    <div>
+        <button onclick="location.href='game_intro.html'">🎮 遊戲介紹</button>
+        <button onclick="location.href='game基本電學_1.html'">🕹️ 遊戲一：填空挑戰</button>
+    </div>
+    
+    <hr>
+
+    <h1>遊戲一:填報威嚴</h>
+    <p>關卡規則：共 8 題，每題要填對全部 3 個空格才得 12.5 分，最高 100 分！</p>
+
+<body bgcolor="lightpink">
+
+    <!-- 左上角切換選單 -->
+    <div>
+        <button onclick="location.href='HTM-1.html'">🏠 首頁</button>
+        <button onclick="location.href='page2.html'">📅 基本電學複習</button>
+        <button onclick="location.href='game_intro.html'">🎮 遊戲介紹</button>
+        <button onclick="location.href='game基本電學_1.html'">🕹️ 遊戲一：隨機挑戰</button>
+        <button onclick="location.href='game基本電學_2.html'">🕹️ 遊戲二：四選一挑戰</button>
+    </div>
+    
+    <hr>
+
+    <h1>🕹️ 遊戲一：電學單位隨機大挑戰 ⚡</h1>
+    <p>關卡規則：每題隨機顯示 1 個提示，請填寫其餘 3 個空格。全對得 12.5 分，最高 100 分！</p>
+
+    <!-- 遊戲表格 -->
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>名稱</th>
+            <th>英文代號</th>
+            <th>單位</th>
+            <th>單位代號</th>
+        </tr>
+        <!-- 這裡改用 JavaScript 動態隨機產生，畫面會更乾淨 -->
+        <tbody id="game-body"></tbody>
+    </table>
+
+    <br>
+    <!-- 送出按鈕 -->
+    <button onclick="checkScore()">確認答案並計算分數（按下一個）</button>
+
+    <script>
+        // 1. 準備 8 題的標準答案資料
+        const quizData = [
+            { name: '電荷', code: 'Q', unit: '庫侖', symbol: 'C' },
+            { name: '電壓', code: 'V', unit: '伏特', symbol: 'V' },
+            { name: '電流', code: 'I', unit: '安培', symbol: 'A' },
+            { name: '電阻', code: 'R', unit: '歐姆', symbol: 'Ω' },
+            { name: '電容', code: 'C', unit: '法拉', symbol: 'F' },
+            { name: '電感', code: 'L', unit: '亨利', symbol: 'H' },
+            { name: '電能', code: 'W', unit: '焦耳', symbol: 'J' },
+            { name: '功率', code: 'P', unit: '瓦特', symbol: 'W' }
+        ];
+
+        // 儲存每一題隨機留下的提示欄位編號
+        const visibleIndices = [];
+
+        // 2. 網頁打開時，自動用迴圈產生 8 行表格，並隨機挖空
+        const tbody = document.getElementById('game-body');
+        quizData.forEach((data, rowIdx) => {
+            // 隨機選一個數字 (0到3)，這個位置當提示，不挖空
+            const showIdx = Math.floor(Math.random() * 4);
+            visibleIndices.push(showIdx);
+
+            // 把答案塞進陣列，方便用迴圈處理格子
+            const answers = [data.name, data.code, data.unit, data.symbol];
+            const placeholders = ['名稱', '代號', '單位', '符號'];
+            
+            let rowHtml = '<tr>';
+            for (let colIdx = 0; colIdx < 4; colIdx++) {
+                if (colIdx === showIdx) {
+                    // 顯示標準答案（提示）
+                    rowHtml += `<td><b>${answers[colIdx]}</b></td>`;
+                } else {
+                    // 挖空成輸入框，給它一個獨一無二的 id (例如 r0_c1)
+                    rowHtml += `<td><input type="text" id="r${rowIdx}_c${colIdx}" size="6" placeholder="${placeholders[colIdx]}"></td>`;
+                }
+            }
+            rowHtml += '</tr>';
+            tbody.innerHTML += rowHtml;
+        });
+
+        // 3. 計算分數的邏輯
+        function checkScore() {
+            let score = 0;
+
+            quizData.forEach((data, rowIdx) => {
+                const answers = [data.name, data.code, data.unit, data.symbol];
+                const showIdx = visibleIndices[rowIdx];
+                let isRowCorrect = true;
+
+                // 檢查這行裡面，除了提示以外的三個輸入框
+                for (let colIdx = 0; colIdx < 4; colIdx++) {
+                    if (colIdx !== showIdx) {
+                        const userInput = document.getElementById(`r${rowIdx}_c${colIdx}`).value.trim();
+                        // 只要有一個格子錯，這一題就沒分
+                        if (userInput !== answers[colIdx]) {
+                            isRowCorrect = false;
+                        }
+                    }
+                }
+
+                if (isRowCorrect) {
+                    score += 12.5;
+                }
+            });
+
+            // 跳出視窗顯示分數
+            alert("測驗結束！你的得分是：" + score + " 分！\n按下確定後將隨機重新出題。");
+            
+            // 點擊確定後自動刷新，重頭來過
+            location.reload();
+        }
+    </script>
+
+</body>

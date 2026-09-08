@@ -1,0 +1,123 @@
+<body bgcolor="lightcyan"> <!-- 遊戲二用清爽的淡藍綠色 -->
+
+    <!-- 左上角切換選單 -->
+    <div>
+        <button onclick="location.href='index.html'">🏠 首頁</button>
+        <button onclick="location.href='page2.html'">📅 基本電學複習</button>
+        <button onclick="location.href='game_intro.html'">🎮 遊戲介紹</button>
+        <button onclick="location.href='game基本電學_1.html'">🕹️ 遊戲一：隨機挑戰</button>
+        <button onclick="location.href='game基本電學_2.html'">🕹️ 遊戲二：四選一挑戰</button>
+    </div>
+    
+    <hr>
+
+    <h1>🕹️ 遊戲二：電學單位四選一挑戰（共 64 種變化）</h1>
+    
+    <!-- 顯示目前分數與題號 -->
+    <p><b>目前得分：<span id="score-display" style="color: blue;">0</span> 分</b></p>
+
+    <!-- 題目顯示區 -->
+    <div style="background-color: white; padding: 20px; border: 2px solid black; display: inline-block; min-width: 300px;">
+        <h3 id="question-text">題目載入中...</h3>
+        
+        <!-- A B C D 四個選項按鈕 -->
+        <button id="btn-A" onclick="submitAnswer(0)" style="display:block; margin:10px 0; width:100%; text-align:left; padding:5px; font-size:16px;"></button>
+        <button id="btn-B" onclick="submitAnswer(1)" style="display:block; margin:10px 0; width:100%; text-align:left; padding:5px; font-size:16px;"></button>
+        <button id="btn-C" onclick="submitAnswer(2)" style="display:block; margin:10px 0; width:100%; text-align:left; padding:5px; font-size:16px;"></button>
+        <button id="btn-D" onclick="submitAnswer(3)" style="display:block; margin:10px 0; width:100%; text-align:left; padding:5px; font-size:16px;"></button>
+    </div>
+
+    <script>
+        // 1. 基礎資料庫
+        const items = [
+            { name: '電荷', code: 'Q', unit: '庫侖', symbol: 'C' },
+            { name: '電壓', code: 'V', unit: '伏特', symbol: 'V' },
+            { name: '電流', code: 'I', unit: '安培', symbol: 'A' },
+            { name: '電阻', code: 'R', unit: '歐姆', symbol: 'Ω' },
+            { name: '電容', code: 'C', unit: '法拉', symbol: 'F' },
+            { name: '電感', code: 'L', unit: '亨利', symbol: 'H' },
+            { name: '電能', code: 'W', unit: '焦耳', symbol: 'J' },
+            { name: '功率', code: 'P', unit: '瓦特', symbol: 'W' }
+        ];
+
+        let totalScore = 0;
+        let correctAnswerText = ""; // 儲存正確答案的中文字串
+        let correctOptionIndex = 0; // 儲存正確答案是 0,1,2,3 哪一個
+
+        // 2. 隨機出題函式
+        function generateQuestion() {
+            // 隨機抽一筆電學項目 (0~7)
+            const targetItem = items[Math.floor(Math.random() * 8)];
+            
+            // 隨機決定考法 (0:問代號, 1:問單位, 2:問符號)
+            const quizType = Math.floor(Math.random() * 3);
+            
+            let question = "";
+            let answer = "";
+            
+            if (quizType === 0) {
+                question = `請問「${targetItem.name}」的【英文代號】是什麼？`;
+                answer = targetItem.code;
+            } else if (quizType === 1) {
+                question = `請問「${targetItem.name}」的【單位名稱】是什麼？`;
+                answer = targetItem.unit;
+            } else {
+                question = `請問「${targetItem.name}」的【單位符號】是什麼？`;
+                answer = targetItem.symbol;
+            }
+            
+            correctAnswerText = answer;
+            document.getElementById("question-text").innerText = question;
+
+            // 3. 製作 4 個選項（包含 1 個正解 + 3 個隨機錯解）
+            let optionsPool = [];
+            items.forEach(it => {
+                if (quizType === 0) optionsPool.push(it.code);
+                else if (quizType === 1) optionsPool.push(it.unit);
+                else optionsPool.push(it.symbol);
+            });
+            
+            // 過濾掉重複的答案，並確保裡面有正確答案
+            optionsPool = [...new Set(optionsPool)];
+            optionsPool = optionsPool.filter(opt => opt !== answer);
+            
+            // 洗牌隨機挑 3 個錯解
+            optionsPool.sort(() => Math.random() - 0.5);
+            let finalOptions = [answer, optionsPool[0], optionsPool[1], optionsPool[2]];
+            
+            // 再次將這 4 個選項打亂順序，不讓正解永遠在第一個
+            finalOptions.sort(() => Math.random() - 0.5);
+            
+            // 記錄正確答案被打亂後的新位置
+            correctOptionIndex = finalOptions.indexOf(answer);
+
+            // 4. 把字塞進網頁按鈕上
+            const prefix = ["(A) ", "(B) ", "(C) ", "(D) "];
+            document.getElementById("btn-A").innerText = prefix[0] + finalOptions[0];
+            document.getElementById("btn-B").innerText = prefix[1] + finalOptions[1];
+            document.getElementById("btn-C").innerText = prefix[2] + finalOptions[2];
+            document.getElementById("btn-D").innerText = prefix[3] + finalOptions[3];
+        }
+
+        // 5. 檢查玩家點擊的選項
+        function submitAnswer(selectedIndex) {
+            const prefix = ["A", "B", "C", "D"];
+            if (selectedIndex === correctOptionIndex) {
+                totalScore += 5; // 每答對一題加 5 分（你也可以自己改分值）
+                alert(`🎉 答對了！\n正確答案就是 (${prefix[correctOptionIndex]}) ${correctAnswerText}`);
+            } else {
+                alert(`❌ 答錯了！\n正確答案是：(${prefix[correctOptionIndex]}) ${correctAnswerText}`);
+            }
+            
+            // 更新畫面的分數
+            document.getElementById("score-display").innerText = totalScore;
+            
+            // 點擊確認後直接更換下一題（不刷新網頁，保留分數）
+            generateQuestion();
+        }
+
+        // 網頁一打開，立刻發動第一題
+        generateQuestion();
+    </script>
+
+</body>

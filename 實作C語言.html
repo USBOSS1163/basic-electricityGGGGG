@@ -1,0 +1,140 @@
+<body bgcolor="#F4F6F7">
+
+    <!-- 左上角切換選單 -->
+    <div>
+        <button onclick="location.href='index.html'">🏠 首頁</button>
+        <button onclick="location.href='C語言學習.html'">💻 返回 C 語言學習</button>
+    </div>
+    
+    <hr>
+
+    <h1>🚀 C 語言線上實作與模擬偵錯區 (Dev-C++ 輔助版)(支援手機!)</h1>
+    <p>請在下方的黑色框框內編寫 C 語言程式碼。本輸入框支援<b>自動補全成對符號</b>功能！</p>
+
+    <!-- 1. 程式碼輸入框（加上 wrap="soft" 確保會自動換行） -->
+    <h3>💻 程式碼輸入區 (Code Input)</h3>
+    <textarea id="c-code" rows="12" wrap="soft" style="width: 100%; max-width: 600px; background-color: #1E1E1E; color: #FFFFFF; font-family: monospace; font-size: 14px; padding: 10px; border-radius: 5px; line-height: 1.5;" placeholder="// 請在此輸入 C 語言程式碼...
+#include <stdio.h>
+int main() {
+    printf(&quot;Hello World\n&quot;);
+    return 0;
+}"></textarea>
+
+    <br><br>
+    <!-- 2. 執行按鈕 -->
+    <button onclick="runCCode()" style="font-size: 16px; padding: 8px 20px; background-color: #28A745; color: white; border: none; border-radius: 5px; cursor: pointer;">▶ 執行程式 (Run)</button>
+    <br><br>
+
+    <!-- 3. 輸出框與偵錯框（並排顯示，加上 wrap="soft" 自動換行） -->
+    <table border="0" width="100%" style="max-width: 600px;" cellpadding="5" cellspacing="0">
+        <tr>
+            <td width="50%" valign="top">
+                <h3>🖥️ 執行輸出 (Output)</h3>
+                <textarea id="c-output" rows="5" wrap="soft" style="width: 100%; background-color: #000000; color: #00FF00; font-family: monospace; padding: 10px;" readonly placeholder="程式執行結果..."></textarea>
+            </td>
+            <td width="50%" valign="top">
+                <h3>⚠️ 語法偵錯區 (Compiler Error Log)</h3>
+                <textarea id="c-error" rows="5" wrap="soft" style="width: 100%; background-color: #330000; color: #FF3333; font-family: monospace; padding: 10px;" readonly placeholder="錯誤原因..."></textarea>
+            </td>
+        </tr>
+    </table>
+
+    <!-- 核心 JavaScript：包含偵錯與 Dev-C++ 自動補全邏輯 -->
+    <script>
+        const codeArea = document.getElementById("c-code");
+
+        // 🎯 鍵盤監聽：實現 Dev-C++ 的自動補全功能
+        codeArea.addEventListener("keydown", function(e) {
+            const pairs = {
+                "(": ")",
+                '"': '"',
+                "'": "'",
+                "[": "]",
+                "{": "}"
+            };
+
+            // 如果打入的字是我們指定的成對符號
+            if (pairs[e.key] !== undefined) {
+                e.preventDefault(); // 阻止原本只輸入一個字元的預設行為
+                
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                const val = this.value;
+                const leftChar = e.key;
+                const rightChar = pairs[e.key];
+
+                // 在游標處自動塞入成對的兩個符號
+                this.value = val.substring(0, start) + leftChar + rightChar + val.substring(end);
+                
+                // 💡 把游標移回到兩個符號的最中間，讓同學直接繼續打字
+                this.selectionStart = this.selectionEnd = start + 1;
+            }
+        });
+
+        // 🔍 編譯與偵錯邏輯
+        function runCCode() {
+            const code = codeArea.value;
+            document.getElementById("c-output").value = "";
+            document.getElementById("c-error").value = "";
+
+            const lines = code.split("\n");
+            let hasError = false;
+            let errorLog = "";
+            let outputText = "";
+
+            for (let i = 0; i < lines.length; i++) {
+                let currentLine = lines[i].trim();
+                let lineNum = i + 1;
+
+                if (currentLine === "" || currentLine.startsWith("//")) continue;
+
+                if (currentLine.includes("printf")) {
+                    if (currentLine.includes("print(")) {
+                        errorLog += `[Error] 第 ${lineNum} 行：拼字錯誤！C 語言使用的是 'printf' 而不是 'print'。\n`;
+                        hasError = true;
+                    }
+                    if (!currentLine.endsWith(";")) {
+                        errorLog += `[Error] 第 ${lineNum} 行：語法錯誤！'printf' 語句的結尾漏掉了分號 ';'。\n`;
+                        hasError = true;
+                    }
+                    if (!currentLine.includes('"') && !currentLine.includes("'")) {
+                        errorLog += `[Error] 第 ${lineNum} 行：語法錯誤！printf 內要輸出的字串漏掉了引號。\n`;
+                        hasError = true;
+                    }
+
+                    if (!hasError) {
+                        let match = currentLine.match(/printf\s*\(\s*["']([^"']*)["']\s*\)\s*;/);
+                        if (match && match[1]) {
+                            let text = match[1];
+                            if (text.includes("\\n")) {
+                                text = text.replace(/\\n/g, "\n");
+                            }
+                            outputText += text;
+                        }
+                    }
+                }
+                
+                if (currentLine.includes("return 0") && !currentLine.endsWith(";")) {
+                    errorLog += `[Error] 第 ${lineNum} 行：語法錯誤！'return 0' 結尾漏掉了分號 ';'。\n`;
+                    hasError = true;
+                }
+            }
+
+            const openBraces = (code.match(/{/g) || []).length;
+            const closeBraces = (code.match(/}/g) || []).length;
+            if (openBraces !== closeBraces) {
+                errorLog += `[Error] 結構錯誤！主程式 main 的大括號 '{}' 沒有成對（左括號有 ${openBraces} 個，右括號有 ${closeBraces} 個）。\n`;
+                hasError = true;
+            }
+
+            if (hasError) {
+                document.getElementById("c-error").value = errorLog;
+                document.getElementById("c-output").value = "【執行失敗：程式碼包含語法錯誤】";
+            } else {
+                document.getElementById("c-output").value = outputText || "【程式執行成功，但畫面沒有輸出任何字。】";
+                document.getElementById("c-error").value = "沒有偵測到語法錯誤！編譯成功！";
+            }
+        }
+    </script>
+
+</body>
