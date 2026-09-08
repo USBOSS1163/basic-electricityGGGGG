@@ -1,14 +1,3 @@
 {
-  "messages": [
-    {
-      "id": "msg_1788873877867",
-      "token": "user_1788693145856_29770",
-      "time": "2026/9/8 下午9:24:37",
-      "title": "測試",
-      "content": "",
-      "txtFileName": null,
-      "txtContent": null,
-      "imgData": null
-    }
-  ]
+  "messages": []
 }
